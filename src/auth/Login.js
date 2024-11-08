@@ -1,48 +1,50 @@
 import { request, response } from "express";
 import { db } from "../Conn";
-import bcryptjs from "bcryptjs"
-import jwt  from "jsonwebtoken";
+import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const Login = async (req = request, res = response) => {
-    const {email, password} = req.body
-    const emailLower = email.toLowerCase()
+    const { email, password } = req.body;
+    const emailLower = email.toLowerCase();
 
     try {
+        // Mencari user berdasarkan email
         const user = await db.user.findUnique({
-            where : {
-                email : emailLower
-            }
-        })
+            where: {
+                email: emailLower,
+            },
+        });
 
-        if(!user) {
-            return res.status(403).json({
-                message : "user must be unique"
-            })
+        // Memeriksa jika user tidak ditemukan
+        if (!user) {
+            return res.status(404).json({
+                message: "User tidak ditemukan",
+            });
         }
 
-        const bycrpt = await bcryptjs.compare(password, user.password)
+        // Membandingkan password yang dimasukkan dengan hash di database
+        const isPasswordMatch = await bcryptjs.compare(password, user.password);
 
-        if(!bycrpt) {
-            return res.status(203).json({
-                message : "password undifind"
-            })
+        // Memeriksa jika password salah
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                message: "Password salah",
+            });
         }
 
-        const token = await jwt.sign({userId : user.id}, process.env.PORT_VITE_ROUTE, {expiresIn : "1d"})
-        if(!token) {
-            return res.status(403).json({
-                message : "token infalid"
-            })
-        }
+        // Membuat token JWT untuk autentikasi
+        const token = jwt.sign({ userId: user.id }, process.env.KEY, { expiresIn: "1d" });
 
-        res.status(201).json({
-            message : "Login succes",
-            user, token
-        })
+        // Mengirim respons login sukses dengan data user dan token
+        res.status(200).json({
+            message: "Login berhasil",
+            user,
+            token,
+        });
     } catch (error) {
-        console.info(error)
-        res.status(500).json({message : "error ni Brooo"})
+        console.error("Terjadi error:", error);
+        res.status(500).json({ message: "Terjadi kesalahan pada server" });
     }
-}  
+};
 
-export default Login
+export default Login;
