@@ -2,6 +2,8 @@ import express from "express"
 import cors from "cors"
 import env from "dotenv"
 import RouteAuth from "./route/RouteAuth"
+import RouteProduck from "./route/RouteProduct"
+
 
 const app = express()
 env.config()
@@ -17,6 +19,7 @@ app.use(express.urlencoded({
 }))
 
 app.use(RouteAuth)
+app.use(RouteProduck)
 
 app.listen(PORT, () => {
     console.info(`
